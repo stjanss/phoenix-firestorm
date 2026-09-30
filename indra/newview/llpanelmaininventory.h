@@ -175,6 +175,7 @@ protected:
     void startSearch();
 
     void onSelectionChange(LLInventoryPanel *panel, const std::deque<LLFolderViewItem*>& items, bool user_action);
+    void onSplitTreeSelectionChanged(const std::deque<LLFolderViewItem*>& items, bool user_action);
 
     static bool filtersVisible(void* user_data);
     void onClearSearch();
@@ -260,12 +261,16 @@ private:
 
     LLPanel* mDefaultViewPanel;
     LLPanel* mCombinationViewPanel;
+    LLPanel* mSplitViewPanel{ nullptr };
 
     bool mSingleFolderMode;
+    bool mSplitViewMode{ false };
     EViewModeType mViewMode;
 
     LLInventorySingleFolderPanel* mCombinationInventoryPanel;
     LLInventoryGallery* mCombinationGalleryPanel;
+    LLInventoryPanel* mSplitTreePanel{ nullptr };
+    LLInventorySingleFolderPanel* mSplitContentsPanel{ nullptr };
     LLPanel* mCombinationGalleryLayoutPanel;
     LLLayoutPanel* mCombinationListLayoutPanel;
     LLLayoutStack* mCombinationLayoutStack;
