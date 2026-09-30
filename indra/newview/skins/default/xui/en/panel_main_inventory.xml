@@ -283,6 +283,83 @@
         </favorites_inventory_panel>
     </tab_container>
   </panel>
+  <panel
+   follows="all"
+   halign="center"
+   height="338"
+   layout="topleft"
+   left="4"
+   right="-4"
+   name="split_view_inventory"
+   top_delta="0"
+   visible="false">
+    <layout_stack
+     follows="all"
+     height="338"
+     name="split_view_stack"
+     animate="false"
+     drag_handle_thickness="6"
+     drag_handle_first_indent="18"
+     drag_handle_second_indent="18"
+     drag_handle_color="PanelGray"
+     drag_handle_shift="5"
+     show_drag_handle="true"
+     top="0"
+     left="0"
+     right="0"
+     orientation="horizontal">
+      <layout_panel
+       border="false"
+       bevel_style="in"
+       user_resize="true"
+       auto_resize="true"
+       width="165"
+       min_width="120"
+       name="split_tree_layout">
+        <inventory_panel
+         border="false"
+         bevel_style="none"
+         follows="all"
+         label="Folders"
+         layout="topleft"
+         name="Split Tree"
+         sort_order_setting="InventorySortOrder"
+         show_item_link_overlays="true"
+         preinitialize_views="false"
+         scroll.reserve_scroll_corner="false">
+          <folder double_click_override="true"/>
+        </inventory_panel>
+      </layout_panel>
+      <layout_panel
+       border="false"
+       bevel_style="in"
+       user_resize="true"
+       auto_resize="true"
+       width="165"
+       min_width="120"
+       name="split_contents_layout">
+        <single_folder_inventory_panel
+         name="split_contents_inv"
+         follows="all"
+         left="0"
+         top="0"
+         height="338"
+         layout="topleft"
+         show_item_link_overlays="true"
+         background_visible="true"
+         border="false"
+         bevel_style="none"
+         scroll.reserve_scroll_corner="false">
+          <item
+           single_folder_mode="true"
+           folder_indentation="-8"/>
+          <folder
+           single_folder_mode="true"
+           folder_indentation="-8"/>
+        </single_folder_inventory_panel>
+      </layout_panel>
+    </layout_stack>
+  </panel>
     <panel
      follows="all"
      halign="center"
