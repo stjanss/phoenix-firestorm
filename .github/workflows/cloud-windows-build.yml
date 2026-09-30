@@ -1,0 +1,81 @@
+name: Cloud Windows test build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AUTOBUILD_VSVER: "170"
+  AUTOBUILD_VARIABLES_FILE: ${{ github.workspace }}\build-variables\variables
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    timeout-minutes: 240
+
+    steps:
+      - name: Check out Firestorm
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check out Firestorm build variables
+        uses: actions/checkout@v4
+        with:
+          repository: FirestormViewer/fs-build-variables
+          path: build-variables
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up CMake 4.1.2
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "4.1.2"
+
+      - name: Set up Cygwin
+        uses: cygwin/cygwin-install-action@v6
+        with:
+          packages: patch
+          install-dir: C:\cygwin64
+          work-vol: C:
+
+      - name: Install Firestorm Python requirements
+        shell: cmd
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Show tool versions
+        shell: cmd
+        run: |
+          python --version
+          cmake --version
+          git --version
+          autobuild --version
+          where patch
+          where makensis
+
+      - name: Configure Firestorm open-source build
+        shell: cmd
+        run: |
+          autobuild configure -A 64 -c ReleaseFS_open -- --package --chan InventoryDev -DLL_TESTS:BOOL=FALSE
+
+      - name: Build Firestorm
+        shell: cmd
+        run: |
+          autobuild build -A 64 -c ReleaseFS_open --no-configure
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Firestorm-InventoryDev-Windows
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            build-*/newview/Release/*Setup.exe
+            build-*/newview/Release/*.xz
