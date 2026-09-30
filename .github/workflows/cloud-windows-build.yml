@@ -2,6 +2,9 @@ name: Cloud Windows test build
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - cloud-build-test
 
 permissions:
   contents: read
