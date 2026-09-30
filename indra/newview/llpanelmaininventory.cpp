@@ -445,6 +445,15 @@ bool LLPanelMainInventory::postBuild()
     if (mSplitTreePanel)
     {
         mSplitTreePanel->setSortOrder(gSavedSettings.getU32(LLInventoryPanel::DEFAULT_SORT_ORDER));
+
+        // Split View's left pane is navigation only: permanently show folders,
+        // while keeping the normal inventory tree behaviour (expand/collapse,
+        // drag/drop, selection, etc.).
+        LLInventoryFilter& split_tree_filter = mSplitTreePanel->getFilter();
+        split_tree_filter.setFilterObjectTypes(0x1ULL << LLInventoryType::IT_CATEGORY);
+        split_tree_filter.setShowFolderState(LLInventoryFilter::SHOW_ALL_FOLDERS);
+        split_tree_filter.markDefault();
+
         mSplitTreePanel->setSelectCallback(boost::bind(&LLPanelMainInventory::onSplitTreeSelectionChanged, this, _1, _2));
     }
 
