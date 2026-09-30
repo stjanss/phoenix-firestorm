@@ -436,9 +436,24 @@ bool LLPanelMainInventory::postBuild()
 
     mDefaultViewPanel = getChild<LLPanel>("default_inventory_panel");
     mCombinationViewPanel = getChild<LLPanel>("combination_view_inventory");
+    mSplitViewPanel = getChild<LLPanel>("split_view_inventory");
     mCombinationGalleryLayoutPanel = getChild<LLLayoutPanel>("comb_gallery_layout");
     mCombinationListLayoutPanel = getChild<LLLayoutPanel>("comb_inventory_layout");
     mCombinationLayoutStack = getChild<LLLayoutStack>("combination_view_stack");
+
+    mSplitTreePanel = getChild<LLInventoryPanel>("Split Tree");
+    if (mSplitTreePanel)
+    {
+        mSplitTreePanel->setSortOrder(gSavedSettings.getU32(LLInventoryPanel::DEFAULT_SORT_ORDER));
+        mSplitTreePanel->setSelectCallback(boost::bind(&LLPanelMainInventory::onSplitTreeSelectionChanged, this, _1, _2));
+    }
+
+    mSplitContentsPanel = getChild<LLInventorySingleFolderPanel>("split_contents_inv");
+    if (mSplitContentsPanel)
+    {
+        LLInventoryFilter& split_contents_filter = mSplitContentsPanel->getFilter();
+        split_contents_filter.markDefault();
+    }
 
     mCombinationInventoryPanel = getChild<LLInventorySingleFolderPanel>("comb_single_folder_inv");
     LLInventoryFilter& comb_inv_filter = mCombinationInventoryPanel->getFilter();
@@ -1613,6 +1628,48 @@ void LLPanelMainInventory::onSelectionChange(LLInventoryPanel *panel, const std:
     panel->onSelectionChange(items, user_action);
 }
 
+void LLPanelMainInventory::onSplitTreeSelectionChanged(const std::deque<LLFolderViewItem*>& items, bool user_action)
+{
+    if (!mSplitTreePanel || !mSplitContentsPanel)
+    {
+        return;
+    }
+
+    mSplitTreePanel->onSelectionChange(items, user_action);
+
+    LLFolderView* root = mSplitTreePanel->getRootFolder();
+    LLFolderViewItem* current_item = root ? root->getCurSelectedItem() : nullptr;
+    if (!current_item)
+    {
+        return;
+    }
+
+    const LLUUID& id = static_cast<LLFolderViewModelItemInventory*>(current_item->getViewModelItem())->getUUID();
+    LLUUID folder_id = id;
+
+    if (!gInventory.getCategory(folder_id))
+    {
+        const LLViewerInventoryItem* selected_item = gInventory.getItem(id);
+        if (selected_item)
+        {
+            folder_id = selected_item->getParentUUID();
+        }
+    }
+
+    if (folder_id.notNull())
+    {
+        if (mSplitContentsPanel->getSingleFolderRoot().isNull())
+        {
+            mSplitContentsPanel->initFolderRoot(folder_id);
+        }
+        else
+        {
+            mSplitContentsPanel->changeFolderRoot(folder_id);
+        }
+        mSplitContentsPanel->clearNavigationHistory();
+    }
+}
+
 ///----------------------------------------------------------------------------
 /// LLFloaterInventoryFinder
 ///----------------------------------------------------------------------------
@@ -2208,7 +2265,11 @@ void LLPanelMainInventory::onAddButtonClick()
 void LLPanelMainInventory::setActivePanel()
 {
     // Todo: should cover gallery mode in some way
-    if(mSingleFolderMode && (isListViewMode() || isCombinationViewMode()))
+    if (mSplitViewMode)
+    {
+        mActivePanel = mSplitContentsPanel;
+    }
+    else if(mSingleFolderMode && (isListViewMode() || isCombinationViewMode()))
     {
         mActivePanel = mCombinationInventoryPanel;
     }
@@ -2216,7 +2277,7 @@ void LLPanelMainInventory::setActivePanel()
     {
         mActivePanel = (LLInventoryPanel*)mFilterTabs->getCurrentPanel();
     }
-    mViewModeBtn->setEnabled(mSingleFolderMode || (getAllItemsPanel() == getActivePanel()));
+    mViewModeBtn->setEnabled(mSplitViewMode || mSingleFolderMode || (getAllItemsPanel() == getActivePanel()));
 }
 
 void LLPanelMainInventory::initSingleFolderRoot(const LLUUID& start_folder_id)
@@ -2227,6 +2288,8 @@ void LLPanelMainInventory::initSingleFolderRoot(const LLUUID& start_folder_id)
 void LLPanelMainInventory::initInventoryViews()
 {
     mAllItemsPanel->initializeViewBuilding();
+    if (mSplitTreePanel)
+        mSplitTreePanel->initializeViewBuilding();
     if (gSavedSettings.getBOOL("InventoryShowRecentTab"))
         mRecentPanel->initializeViewBuilding();
     if (gSavedSettings.getBOOL("InventoryShowWornTab"))
@@ -2235,23 +2298,35 @@ void LLPanelMainInventory::initInventoryViews()
 
 void LLPanelMainInventory::toggleViewMode()
 {
-    if(mSingleFolderMode && isCombinationViewMode() && mCombinationGalleryPanel->getRootFolder().notNull())
+    if (mSplitViewMode)
     {
-        mCombinationInventoryPanel->getRootFolder()->setForceArrange(false);
+        // Split View -> normal tree view
+        mSplitViewMode = false;
+        mSingleFolderMode = false;
+    }
+    else if (mSingleFolderMode)
+    {
+        // Single-folder view -> Split View
+        mSingleFolderMode = false;
+        mSplitViewMode = true;
+    }
+    else
+    {
+        // Normal tree view -> single-folder view
+        mSingleFolderMode = true;
+        mSplitViewMode = false;
     }
 
-    mSingleFolderMode = !mSingleFolderMode;
     mReshapeInvLayout = true;
 
-    if (mCombinationGalleryPanel->getRootFolder().isNull())
+    if (mSingleFolderMode && mCombinationGalleryPanel->getRootFolder().isNull())
     {
         mCombinationGalleryPanel->setRootFolder(mCombinationInventoryPanel->getSingleFolderRoot());
         mCombinationGalleryPanel->updateRootFolder();
     }
 
     updatePanelVisibility();
-    // <FS:Ansariel> Disable Expand/Collapse buttons in single folder mode
-    getChild<LLLayoutPanel>("collapse_expand_buttons")->setVisible(!mSingleFolderMode);
+    getChild<LLLayoutPanel>("collapse_expand_buttons")->setVisible(!mSingleFolderMode && !mSplitViewMode);
 
     setActivePanel();
     updateTitle();
@@ -2259,7 +2334,7 @@ void LLPanelMainInventory::toggleViewMode()
 
     if (mParentSidepanel)
     {
-        if(mSingleFolderMode)
+        if(mSingleFolderMode || mSplitViewMode)
         {
             mParentSidepanel->hideInbox();
         }
@@ -2307,6 +2382,24 @@ void LLPanelMainInventory::onViewModeClick()
     }
 
     toggleViewMode();
+
+    if (mSplitViewMode && mSplitContentsPanel)
+    {
+        LLUUID split_root = new_root_folder;
+        if (split_root.isNull())
+        {
+            split_root = gInventory.getRootFolderID();
+        }
+        if (mSplitContentsPanel->getSingleFolderRoot().isNull())
+        {
+            mSplitContentsPanel->initFolderRoot(split_root);
+        }
+        else
+        {
+            mSplitContentsPanel->changeFolderRoot(split_root);
+        }
+        mSplitContentsPanel->clearNavigationHistory();
+    }
 
     if (mSingleFolderMode && new_root_folder.notNull())
     {
@@ -3309,11 +3402,13 @@ void LLPanelMainInventory::onCombinationInventorySelectionChanged(const std::deq
 
 void LLPanelMainInventory::updatePanelVisibility()
 {
-    mDefaultViewPanel->setVisible(!mSingleFolderMode);
+    mDefaultViewPanel->setVisible(!mSingleFolderMode && !mSplitViewMode);
     mCombinationViewPanel->setVisible(mSingleFolderMode);
+    mSplitViewPanel->setVisible(mSplitViewMode);
     mNavigationBtnsPanel->setVisible(mSingleFolderMode);
-    mViewModeBtn->setImageOverlay(mSingleFolderMode ? getString("default_mode_btn") : getString("single_folder_mode_btn"));
-    mViewModeBtn->setEnabled(mSingleFolderMode || (getAllItemsPanel() == getActivePanel()));
+    mViewModeBtn->setImageOverlay((mSingleFolderMode || mSplitViewMode) ? getString("default_mode_btn") : getString("single_folder_mode_btn"));
+    mViewModeBtn->setToolTip(mSplitViewMode ? "Split View" : (mSingleFolderMode ? "Single Folder View" : "Inventory View"));
+    mViewModeBtn->setEnabled(mSplitViewMode || mSingleFolderMode || (getAllItemsPanel() == getActivePanel()));
     if (mSingleFolderMode)
     {
         if (isCombinationViewMode())
