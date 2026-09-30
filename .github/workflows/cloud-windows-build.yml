@@ -42,7 +42,7 @@ jobs:
         with:
           packages: patch
           install-dir: C:\cygwin64
-          work-vol: C:
+          work-vol: "C:"
 
       - name: Install Firestorm Python requirements
         shell: cmd
