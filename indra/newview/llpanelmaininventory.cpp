@@ -3416,7 +3416,6 @@ void LLPanelMainInventory::updatePanelVisibility()
     mSplitViewPanel->setVisible(mSplitViewMode);
     mNavigationBtnsPanel->setVisible(mSingleFolderMode);
     mViewModeBtn->setImageOverlay((mSingleFolderMode || mSplitViewMode) ? getString("default_mode_btn") : getString("single_folder_mode_btn"));
-    mViewModeBtn->setToolTip(mSplitViewMode ? "Split View" : (mSingleFolderMode ? "Single Folder View" : "Inventory View"));
     mViewModeBtn->setEnabled(mSplitViewMode || mSingleFolderMode || (getAllItemsPanel() == getActivePanel()));
     if (mSingleFolderMode)
     {
