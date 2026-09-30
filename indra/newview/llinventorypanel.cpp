@@ -2983,7 +2983,7 @@ void LLInventorySingleFolderPanel::onFocusReceived()
 {
     // Tab support, when tabbing into this view, select first item
     // (ideally needs to account for scroll)
-    bool select_first = mSelectThisID.isNull() && mFolderRoot.get() && mFolderRoot.get()->getSelectedCount() == 0;
+    bool select_first = mAutoSelectOnFocus && mSelectThisID.isNull() && mFolderRoot.get() && mFolderRoot.get()->getSelectedCount() == 0;
 
     if (select_first)
     {

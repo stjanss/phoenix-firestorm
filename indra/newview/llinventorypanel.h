@@ -439,6 +439,7 @@ public:
     bool isSelectionRemovable() { return false; }
 
     void initFolderRoot(const LLUUID& start_folder_id = LLUUID::null);
+    void setAutoSelectOnFocus(bool enabled) { mAutoSelectOnFocus = enabled; }
 
     void changeFolderRoot(const LLUUID& new_id);
     void onForwardFolder();
@@ -471,6 +472,7 @@ protected:
     friend class LLUICtrlFactory;
 
     LLUUID mFolderID;
+    bool mAutoSelectOnFocus{ true };
     std::list<LLUUID> mBackwardFolders;
     std::list<LLUUID> mForwardFolders;
 

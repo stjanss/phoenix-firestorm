@@ -461,6 +461,8 @@ bool LLPanelMainInventory::postBuild()
     mSplitContentsPanel = getChild<LLInventorySingleFolderPanel>("split_contents_inv");
     if (mSplitContentsPanel)
     {
+        mSplitContentsPanel->setAutoSelectOnFocus(false);
+
         LLInventoryFilter& split_contents_filter = mSplitContentsPanel->getFilter();
         split_contents_filter.markDefault();
 
@@ -1018,6 +1020,12 @@ bool LLPanelMainInventory::isAnyFilterChecked(const LLSD& userdata)
             // If either of the three filter checks are true, Is Not Default, Filter Creator Type is not set to all creators,
             // and Show Folder State is set to show folder state then we need to turn on the Show Filter Button check higlight,
             // so return true if any of these are true.
+            if (mSplitViewMode)
+            {
+                return filter.isNotDefault() ||
+                       filter.getFilterCreatorType() != LLInventoryFilter::FILTERCREATOR_ALL;
+            }
+
             return filter.isNotDefault() || filter.getFilterCreatorType() != LLInventoryFilter::FILTERCREATOR_ALL ||
                    filter.getShowFolderState() == LLInventoryFilter::SHOW_ALL_FOLDERS;
         }
