@@ -131,6 +131,7 @@ public:
     void findLinks(const LLUUID& item_id, const std::string& item_name);
 
     void onViewModeClick();
+    void onSplitViewClick();
     void toggleViewMode();
     void initSingleFolderRoot(const LLUUID& start_folder_id = LLUUID::null);
     void initInventoryViews();
@@ -257,6 +258,7 @@ private:
     LLButton* mForwardBtn;
     LLButton* mUpBtn;
     LLButton* mViewModeBtn;
+    LLButton* mSplitViewBtn{ nullptr };
     LLLayoutPanel* mNavigationBtnsPanel;
 
     LLPanel* mDefaultViewPanel;

@@ -432,6 +432,7 @@ bool LLPanelMainInventory::postBuild()
     mForwardBtn = getChild<LLButton>("forward_btn");
     mUpBtn = getChild<LLButton>("up_btn");
     mViewModeBtn = getChild<LLButton>("view_mode_btn");
+    mSplitViewBtn = getChild<LLButton>("split_view_btn");
     mNavigationBtnsPanel = getChild<LLLayoutPanel>("nav_buttons");
 
     mDefaultViewPanel = getChild<LLPanel>("default_inventory_panel");
@@ -462,6 +463,10 @@ bool LLPanelMainInventory::postBuild()
     {
         LLInventoryFilter& split_contents_filter = mSplitContentsPanel->getFilter();
         split_contents_filter.markDefault();
+
+        const LLUUID split_root_id = gInventory.getRootFolderID();
+        mSplitContentsPanel->initFolderRoot(split_root_id);
+        mSplitContentsPanel->initializeViewBuilding();
     }
 
     mCombinationInventoryPanel = getChild<LLInventorySingleFolderPanel>("comb_single_folder_inv");
@@ -1072,6 +1077,13 @@ void LLPanelMainInventory::onClearSearch()
 
 void LLPanelMainInventory::onFilterEdit(const std::string& search_string )
 {
+    if (mSplitViewMode && mSplitContentsPanel)
+    {
+        mFilterSubString = search_string;
+        mSplitContentsPanel->setFilterSubString(search_string);
+        return;
+    }
+
     if(mSingleFolderMode && isGalleryViewMode())
     {
         mFilterSubString = search_string;
@@ -1667,14 +1679,8 @@ void LLPanelMainInventory::onSplitTreeSelectionChanged(const std::deque<LLFolder
 
     if (folder_id.notNull())
     {
-        if (mSplitContentsPanel->getSingleFolderRoot().isNull())
-        {
-            mSplitContentsPanel->initFolderRoot(folder_id);
-        }
-        else
-        {
-            mSplitContentsPanel->changeFolderRoot(folder_id);
-        }
+        LLInventoryModelBackgroundFetch::instance().start(folder_id, false);
+        mSplitContentsPanel->changeFolderRoot(folder_id);
         mSplitContentsPanel->clearNavigationHistory();
     }
 }
@@ -2213,6 +2219,7 @@ void LLPanelMainInventory::initListCommandsHandlers()
     childSetAction("trash_btn", boost::bind(&LLPanelMainInventory::onTrashButtonClick, this)); // <FS:Ansariel> Keep better inventory layout
     childSetAction("add_btn", boost::bind(&LLPanelMainInventory::onAddButtonClick, this));
     mViewModeBtn->setCommitCallback(boost::bind(&LLPanelMainInventory::onViewModeClick, this));
+    mSplitViewBtn->setCommitCallback(boost::bind(&LLPanelMainInventory::onSplitViewClick, this));
     mUpBtn->setCommitCallback(boost::bind(&LLPanelMainInventory::onUpFolderClicked, this));
     mBackBtn->setCommitCallback(boost::bind(&LLPanelMainInventory::onBackFolderClicked, this));
     mForwardBtn->setCommitCallback(boost::bind(&LLPanelMainInventory::onForwardFolderClicked, this));
@@ -2307,35 +2314,23 @@ void LLPanelMainInventory::initInventoryViews()
 
 void LLPanelMainInventory::toggleViewMode()
 {
-    if (mSplitViewMode)
+    if(mSingleFolderMode && isCombinationViewMode() && mCombinationGalleryPanel->getRootFolder().notNull())
     {
-        // Split View -> normal tree view
-        mSplitViewMode = false;
-        mSingleFolderMode = false;
-    }
-    else if (mSingleFolderMode)
-    {
-        // Single-folder view -> Split View
-        mSingleFolderMode = false;
-        mSplitViewMode = true;
-    }
-    else
-    {
-        // Normal tree view -> single-folder view
-        mSingleFolderMode = true;
-        mSplitViewMode = false;
+        mCombinationInventoryPanel->getRootFolder()->setForceArrange(false);
     }
 
+    mSplitViewMode = false;
+    mSingleFolderMode = !mSingleFolderMode;
     mReshapeInvLayout = true;
 
-    if (mSingleFolderMode && mCombinationGalleryPanel->getRootFolder().isNull())
+    if (mCombinationGalleryPanel->getRootFolder().isNull())
     {
         mCombinationGalleryPanel->setRootFolder(mCombinationInventoryPanel->getSingleFolderRoot());
         mCombinationGalleryPanel->updateRootFolder();
     }
 
     updatePanelVisibility();
-    getChild<LLLayoutPanel>("collapse_expand_buttons")->setVisible(!mSingleFolderMode && !mSplitViewMode);
+    getChild<LLLayoutPanel>("collapse_expand_buttons")->setVisible(!mSingleFolderMode);
 
     setActivePanel();
     updateTitle();
@@ -2343,7 +2338,7 @@ void LLPanelMainInventory::toggleViewMode()
 
     if (mParentSidepanel)
     {
-        if(mSingleFolderMode || mSplitViewMode)
+        if(mSingleFolderMode)
         {
             mParentSidepanel->hideInbox();
         }
@@ -2356,6 +2351,23 @@ void LLPanelMainInventory::toggleViewMode()
 
 void LLPanelMainInventory::onViewModeClick()
 {
+    if (mSplitViewMode)
+    {
+        mSplitViewMode = false;
+        mSingleFolderMode = false;
+        updatePanelVisibility();
+        getChild<LLLayoutPanel>("collapse_expand_buttons")->setVisible(true);
+        setActivePanel();
+        updateTitle();
+        onFilterSelected();
+
+        if (mParentSidepanel)
+        {
+            mParentSidepanel->toggleInbox();
+        }
+        return;
+    }
+
     LLUUID selected_folder;
     LLUUID new_root_folder;
     if(mSingleFolderMode)
@@ -2392,24 +2404,6 @@ void LLPanelMainInventory::onViewModeClick()
 
     toggleViewMode();
 
-    if (mSplitViewMode && mSplitContentsPanel)
-    {
-        LLUUID split_root = new_root_folder;
-        if (split_root.isNull())
-        {
-            split_root = gInventory.getRootFolderID();
-        }
-        if (mSplitContentsPanel->getSingleFolderRoot().isNull())
-        {
-            mSplitContentsPanel->initFolderRoot(split_root);
-        }
-        else
-        {
-            mSplitContentsPanel->changeFolderRoot(split_root);
-        }
-        mSplitContentsPanel->clearNavigationHistory();
-    }
-
     if (mSingleFolderMode && new_root_folder.notNull())
     {
         setSingleFolderViewRoot(new_root_folder, true);
@@ -2424,6 +2418,58 @@ void LLPanelMainInventory::onViewModeClick()
         {
             selectAllItemsPanel();
             getActivePanel()->setSelection(selected_folder, TAKE_FOCUS_YES);
+        }
+    }
+}
+
+void LLPanelMainInventory::onSplitViewClick()
+{
+    mSplitViewMode = !mSplitViewMode;
+    mSingleFolderMode = false;
+
+    if (mSplitViewMode && mSplitContentsPanel)
+    {
+        LLUUID folder_id = gInventory.getRootFolderID();
+
+        if (mSplitTreePanel)
+        {
+            LLFolderView* root = mSplitTreePanel->getRootFolder();
+            LLFolderViewItem* current_item = root ? root->getCurSelectedItem() : nullptr;
+            if (current_item)
+            {
+                const LLUUID& selected_id =
+                    static_cast<LLFolderViewModelItemInventory*>(current_item->getViewModelItem())->getUUID();
+
+                if (gInventory.getCategory(selected_id))
+                {
+                    folder_id = selected_id;
+                }
+            }
+        }
+
+        if (folder_id.notNull())
+        {
+            LLInventoryModelBackgroundFetch::instance().start(folder_id, false);
+            mSplitContentsPanel->changeFolderRoot(folder_id);
+            mSplitContentsPanel->clearNavigationHistory();
+        }
+    }
+
+    updatePanelVisibility();
+    getChild<LLLayoutPanel>("collapse_expand_buttons")->setVisible(!mSingleFolderMode);
+    setActivePanel();
+    updateTitle();
+    onFilterSelected();
+
+    if (mParentSidepanel)
+    {
+        if (mSplitViewMode)
+        {
+            mParentSidepanel->hideInbox();
+        }
+        else
+        {
+            mParentSidepanel->toggleInbox();
         }
     }
 }
@@ -3415,8 +3461,9 @@ void LLPanelMainInventory::updatePanelVisibility()
     mCombinationViewPanel->setVisible(mSingleFolderMode);
     mSplitViewPanel->setVisible(mSplitViewMode);
     mNavigationBtnsPanel->setVisible(mSingleFolderMode);
-    mViewModeBtn->setImageOverlay((mSingleFolderMode || mSplitViewMode) ? getString("default_mode_btn") : getString("single_folder_mode_btn"));
+    mViewModeBtn->setImageOverlay(mSingleFolderMode ? getString("default_mode_btn") : getString("single_folder_mode_btn"));
     mViewModeBtn->setEnabled(mSplitViewMode || mSingleFolderMode || (getAllItemsPanel() == getActivePanel()));
+    mSplitViewBtn->setToggleState(mSplitViewMode);
     if (mSingleFolderMode)
     {
         if (isCombinationViewMode())
