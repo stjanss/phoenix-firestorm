@@ -498,35 +498,45 @@ char rlvGagIMCharacter(char ch)
 
     switch (lower)
     {
+        // Vowels remain mostly intact; they carry most of the recognizable speech.
         case 'a': return 'a';
         case 'e': return 'e';
         case 'i': return 'i';
         case 'o': return 'o';
         case 'u': return 'u';
-        case 'y': return 'i';
+        case 'y': return 'y';
 
-        case 'r': return 'a';
+        // Lip-closure and lip/teeth consonants become open, breathy sounds.
+        case 'b':
+        case 'm':
+        case 'p':
+            return 'w';
+        case 'f':
+        case 'v':
+            return 'h';
+
+        // Tongue-tip consonants are softened because the tongue has little room to move.
         case 'd':
-        case 't': return 'e';
+        case 't':
         case 's':
         case 'z':
-        case 'j': return 'i';
-
-        case 'b':
-        case 'c':
-        case 'f':
-        case 'g':
-        case 'h':
-        case 'k':
-        case 'l':
-        case 'm':
-        case 'n':
-        case 'p':
-        case 'q':
-        case 'v':
-        case 'w':
         case 'x':
-            return 'm';
+            return 'h';
+        case 'l':
+        case 'r':
+            return 'w';
+        case 'j':
+            return 'y';
+
+        // Nasal and back-of-tongue sounds remain relatively recognizable.
+        case 'n': return 'n';
+        case 'c':
+        case 'q':
+        case 'k':
+            return 'k';
+        case 'g': return 'g';
+        case 'h': return 'h';
+        case 'w': return 'w';
 
         default:
             return ch;
@@ -565,8 +575,8 @@ std::string rlvGagIMSegment(const std::string& text, bool preserveOoc)
 
 std::string RlvUtil::filterOutgoingIMGag(const std::string& strUTF8Text)
 {
-    // When "Allow OOC Chat" is disabled, ((OOC)) sections remain readable.
-    const bool preserveOoc = !rlvGetSetting<bool>(RlvSettingNames::CanOoc, true);
+    // When "Allow OOC Chat" is enabled, ((OOC)) sections remain readable.
+    const bool preserveOoc = rlvGetSetting<bool>(RlvSettingNames::CanOoc, true);
 
     // /me text is narration. In mixed emotes only quoted speech is gagged.
     if (strUTF8Text.compare(0, 3, "/me") == 0 &&
