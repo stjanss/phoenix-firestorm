@@ -283,6 +283,84 @@
         </favorites_inventory_panel>
     </tab_container>
   </panel>
+  <panel
+   follows="all"
+   halign="center"
+   height="338"
+   layout="topleft"
+   left="4"
+   right="-4"
+   name="split_view_inventory"
+   top_delta="0"
+   visible="false">
+    <layout_stack
+     follows="all"
+     height="338"
+     name="split_view_stack"
+     animate="false"
+     drag_handle_thickness="6"
+     drag_handle_first_indent="18"
+     drag_handle_second_indent="18"
+     drag_handle_color="PanelGray"
+     drag_handle_shift="5"
+     show_drag_handle="true"
+     top="0"
+     left="0"
+     right="0"
+     orientation="horizontal">
+      <layout_panel
+       border="false"
+       bevel_style="in"
+       user_resize="true"
+       auto_resize="true"
+       width="165"
+       min_width="120"
+       name="split_tree_layout">
+        <inventory_panel
+         border="false"
+         bevel_style="none"
+         follows="all"
+         label="Folders"
+         layout="topleft"
+         name="Split Tree"
+         sort_order_setting="InventorySortOrder"
+         show_item_link_overlays="true"
+         preinitialize_views="false"
+         scroll.reserve_scroll_corner="false">
+          <folder double_click_override="true"/>
+        </inventory_panel>
+      </layout_panel>
+      <layout_panel
+       border="false"
+       bevel_style="in"
+       user_resize="true"
+       auto_resize="true"
+       right="-1"
+       min_width="120"
+       name="split_contents_layout">
+        <single_folder_inventory_panel
+         name="split_contents_inv"
+         follows="all"
+         left="0"
+         right="-6"
+         top="3"
+         bottom="-1"
+         layout="topleft"
+         show_item_link_overlays="true"
+         background_visible="true"
+         border="false"
+         bevel_style="none"
+         scroll.reserve_scroll_corner="false">
+          <item
+           single_folder_mode="true"
+           folder_indentation="-8"/>
+          <folder
+           single_folder_mode="true"
+           folder_indentation="-8"/>
+        </single_folder_inventory_panel>
+      </layout_panel>
+    </layout_stack>
+  </panel>
     <panel
      follows="all"
      halign="center"
@@ -476,6 +554,27 @@
            left="0"
            name="view_mode_btn"
            tool_tip="Switch between views"
+           top="0"
+           width="31"/>
+      </panel>
+      <panel
+       follows="top|left"
+       height="25"
+       layout="topleft"
+       left_pad="0"
+       name="split_view_panel"
+       width="32">
+          <button
+           follows="top|left"
+           height="25"
+           image_hover_unselected="Toolbar_Middle_Over"
+           image_overlay="List_View_On"
+           image_selected="Toolbar_Middle_Selected"
+           image_unselected="Toolbar_Middle_Off"
+           layout="topleft"
+           left="0"
+           name="split_view_btn"
+           tool_tip="Split View"
            top="0"
            width="31"/>
       </panel>

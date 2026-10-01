@@ -131,6 +131,7 @@ public:
     void findLinks(const LLUUID& item_id, const std::string& item_name);
 
     void onViewModeClick();
+    void onSplitViewClick();
     void toggleViewMode();
     void initSingleFolderRoot(const LLUUID& start_folder_id = LLUUID::null);
     void initInventoryViews();
@@ -175,6 +176,7 @@ protected:
     void startSearch();
 
     void onSelectionChange(LLInventoryPanel *panel, const std::deque<LLFolderViewItem*>& items, bool user_action);
+    void onSplitTreeSelectionChanged(const std::deque<LLFolderViewItem*>& items, bool user_action);
 
     static bool filtersVisible(void* user_data);
     void onClearSearch();
@@ -256,16 +258,21 @@ private:
     LLButton* mForwardBtn;
     LLButton* mUpBtn;
     LLButton* mViewModeBtn;
+    LLButton* mSplitViewBtn{ nullptr };
     LLLayoutPanel* mNavigationBtnsPanel;
 
     LLPanel* mDefaultViewPanel;
     LLPanel* mCombinationViewPanel;
+    LLPanel* mSplitViewPanel{ nullptr };
 
     bool mSingleFolderMode;
+    bool mSplitViewMode{ false };
     EViewModeType mViewMode;
 
     LLInventorySingleFolderPanel* mCombinationInventoryPanel;
     LLInventoryGallery* mCombinationGalleryPanel;
+    LLInventoryPanel* mSplitTreePanel{ nullptr };
+    LLInventorySingleFolderPanel* mSplitContentsPanel{ nullptr };
     LLPanel* mCombinationGalleryLayoutPanel;
     LLLayoutPanel* mCombinationListLayoutPanel;
     LLLayoutStack* mCombinationLayoutStack;
