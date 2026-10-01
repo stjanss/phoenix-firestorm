@@ -463,12 +463,13 @@ bool LLPanelMainInventory::postBuild()
     {
         mSplitContentsPanel->setAutoSelectOnFocus(false);
 
-        LLInventoryFilter& split_contents_filter = mSplitContentsPanel->getFilter();
-        split_contents_filter.markDefault();
-
         const LLUUID split_root_id = gInventory.getRootFolderID();
         mSplitContentsPanel->initFolderRoot(split_root_id);
         mSplitContentsPanel->initializeViewBuilding();
+
+        // Split View has its own single-folder root setup. Mark the filter default
+        // only after initFolderRoot() has applied the panel's internal defaults.
+        mSplitContentsPanel->getFilter().markDefault();
     }
 
     mCombinationInventoryPanel = getChild<LLInventorySingleFolderPanel>("comb_single_folder_inv");
@@ -1230,6 +1231,13 @@ void LLPanelMainInventory::onFilterTypeSelected(const std::string& filter_type_n
         return;
     }
 
+    // In Split View the right pane represents the direct contents of a folder.
+    // Keep subfolders visible while item-type filters affect the actual items.
+    if (mSplitViewMode)
+    {
+        filterTypes |= (0x1ULL << LLInventoryType::IT_CATEGORY);
+    }
+
     mActivePanel->setFilterTypes(filterTypes);
     // update subwindow if it's open
     if (finder)
@@ -1980,7 +1988,13 @@ void LLFloaterInventoryFinder::draw()
         filtered_by_all_types = false;
     }
 
-    if (!filtered_by_all_types || (mPanelMainInventory->getPanel()->getFilter().getFilterTypes() & LLInventoryFilter::FILTERTYPE_DATE))
+    if (mPanelMainInventory->mSplitViewMode)
+    {
+        // The right Split View pane always shows direct subfolders. Item-type
+        // checkboxes filter items only, not the folder entries themselves.
+        filter |= (0x1ULL << LLInventoryType::IT_CATEGORY);
+    }
+    else if (!filtered_by_all_types || (mPanelMainInventory->getPanel()->getFilter().getFilterTypes() & LLInventoryFilter::FILTERTYPE_DATE))
     {
         // don't include folders in filter, unless I've selected everything or filtering by date
         filter &= ~(0x1 << LLInventoryType::IT_CATEGORY);

@@ -66,7 +66,7 @@ jobs:
       - name: Configure Firestorm open-source build
         shell: cmd
         run: |
-          autobuild configure -A 64 -c ReleaseFS_open -- --package --chan InventoryDev -DLL_TESTS:BOOL=FALSE
+          autobuild configure -A 64 -c ReleaseFS_open -- --package --chan InventoryDev -DLL_TESTS:BOOL=FALSE -DUSE_AVX2_OPTIMIZATION:BOOL=ON
 
       - name: Build Firestorm
         shell: cmd

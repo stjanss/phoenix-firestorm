@@ -3180,11 +3180,47 @@ void LLInventorySingleFolderPanel::doCreate(const LLSD& userdata)
 
 void LLInventorySingleFolderPanel::doToSelected(const LLSD& userdata)
 {
-    if (("open_in_current_window" == userdata.asString()))
+    const std::string action = userdata.asString();
+
+    if ("open_in_current_window" == action)
     {
         changeFolderRoot(LLFolderBridge::sSelf.get()->getUUID());
         return;
     }
+
+    // A single-folder view has an implicit destination: its current root folder.
+    // Preserve the normal behavior when an actual subfolder is selected, but
+    // paste into the current folder when the selection is an item.
+    if ((action == "paste" || action == "paste_link") && mFolderRoot.get())
+    {
+        LLFolderViewItem* selected_item = mFolderRoot.get()->getCurSelectedItem();
+        bool selected_folder = false;
+
+        if (selected_item)
+        {
+            const LLFolderViewModelItemInventory* model_item =
+                static_cast<const LLFolderViewModelItemInventory*>(selected_item->getViewModelItem());
+            selected_folder = model_item && (gInventory.getCategory(model_item->getUUID()) != nullptr);
+        }
+
+        if (!selected_folder)
+        {
+            LLFolderViewItem* root_item = getItemByID(mFolderID);
+            if (root_item)
+            {
+                if (action == "paste")
+                {
+                    root_item->getViewModelItem()->pasteFromClipboard();
+                }
+                else
+                {
+                    root_item->getViewModelItem()->pasteLinkFromClipboard();
+                }
+                return;
+            }
+        }
+    }
+
     LLInventoryPanel::doToSelected(userdata);
 }
 
