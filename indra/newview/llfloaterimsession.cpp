@@ -330,7 +330,7 @@ void LLFloaterIMSession::sendMsg(const std::string& msg)
 
         if (fRlvFilter)
         {
-            utf8_text = rlvGetSetting<bool>(RlvSettingNames::EnableIMGag, false)
+            utf8_text = RlvSettings::getEnableIMGag()
                 ? RlvUtil::filterOutgoingIMGag(msg)
                 : RlvStrings::getString(RlvStringKeys::Blocked::SendIm);
         }

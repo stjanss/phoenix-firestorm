@@ -1403,7 +1403,7 @@
     <key>RLVaEnableIMGag</key>
     <map>
       <key>Comment</key>
-      <string>Replaces outgoing IM text with a client-side gag transformation when @sendim blocks the message</string>
+      <string>Replaces outgoing IM text with a client-side gag transformation when @sendim blocks the message. Requires a relog after changing.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>

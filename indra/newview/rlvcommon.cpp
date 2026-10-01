@@ -89,6 +89,7 @@ void RlvNotifications::onGiveToRLVConfirmation(const LLSD& notification, const L
 bool RlvSettings::s_fCompositeFolders = false;
 #endif // RLV_EXPERIMENTAL_COMPOSITEFOLDERS
 bool RlvSettings::s_fCanOOC = true;
+bool RlvSettings::s_fEnableIMGag = false;
 U8 RlvSettings::s_nExperienceMinMaturity = 0;
 bool RlvSettings::s_fLegacyNaming = true;
 bool RlvSettings::s_fNoSetEnv = false;
@@ -120,6 +121,8 @@ void RlvSettings::initClass()
             gSavedSettings.getControl(RlvSettingNames::EnableLegacyNaming)->getSignal()->connect(boost::bind(&onChangedSettingBOOL, _2, &s_fLegacyNaming));
 
         s_fCanOOC = rlvGetSetting<bool>(RlvSettingNames::CanOoc, true);
+        // Deliberately cached at startup: changing the IM gag option requires a relog.
+        s_fEnableIMGag = rlvGetSetting<bool>(RlvSettingNames::EnableIMGag, false);
         s_fNoSetEnv = rlvGetSetting<bool>(RlvSettingNames::NoSetEnv, false);
 
         // Don't allow toggling RLVaLoginLastLocation from the debug settings floater

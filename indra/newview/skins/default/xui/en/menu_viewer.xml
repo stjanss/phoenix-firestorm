@@ -3005,7 +3005,7 @@
       	 parameter="RestrainedLoveCanOOC" />
       </menu_item_check>
       <menu_item_check
-       label="Client-side IM Gag"
+       label="Client-side IM Gag (relog required)"
        name="Client-side IM Gag">
         <menu_item_check.on_check
          function="CheckControl"

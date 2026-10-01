@@ -100,6 +100,7 @@ public:
     static bool getEnableComposites()           { return s_fCompositeFolders; }
     #endif // RLV_EXPERIMENTAL_COMPOSITEFOLDERS
     static bool getEnableIMQuery()              { return rlvGetSetting<bool>(RlvSettingNames::EnableIMQuery, true); }
+    static bool getEnableIMGag()                { return s_fEnableIMGag; }
     static bool getEnableLegacyNaming()         { return s_fLegacyNaming; }
     static bool getEnableSharedWear()           { return rlvGetSetting<bool>(RlvSettingNames::EnableSharedWear, false); }
     static bool getEnableTemporaryAttachments() { return s_fTempAttach; }
@@ -132,6 +133,7 @@ protected:
      */
 protected:
     static bool s_fCanOOC;
+    static bool s_fEnableIMGag;
     static U8   s_nExperienceMinMaturity;
     static bool s_fLegacyNaming;
     static bool s_fNoSetEnv;
