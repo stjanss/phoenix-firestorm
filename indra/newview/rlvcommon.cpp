@@ -488,6 +488,110 @@ std::string escape_for_regex(const std::string& str)
     return regex_replace(str, regex("[.^$|()\\[\\]{}*+?\\\\]"), "\\\\&", match_default|format_sed);
 }
 
+namespace
+{
+char rlvGagIMCharacter(char ch)
+{
+    char lower = ch;
+    if (lower >= 'A' && lower <= 'Z')
+        lower = static_cast<char>(lower - 'A' + 'a');
+
+    switch (lower)
+    {
+        case 'a': return 'a';
+        case 'e': return 'e';
+        case 'i': return 'i';
+        case 'o': return 'o';
+        case 'u': return 'u';
+        case 'y': return 'i';
+
+        case 'r': return 'a';
+        case 'd':
+        case 't': return 'e';
+        case 's':
+        case 'z':
+        case 'j': return 'i';
+
+        case 'b':
+        case 'c':
+        case 'f':
+        case 'g':
+        case 'h':
+        case 'k':
+        case 'l':
+        case 'm':
+        case 'n':
+        case 'p':
+        case 'q':
+        case 'v':
+        case 'w':
+        case 'x':
+            return 'm';
+
+        default:
+            return ch;
+    }
+}
+
+std::string rlvGagIMSegment(const std::string& text, bool preserveOoc)
+{
+    std::string result;
+    result.reserve(text.size());
+
+    size_t pos = 0;
+    while (pos < text.size())
+    {
+        if (preserveOoc && pos + 1 < text.size() && text[pos] == '(' && text[pos + 1] == '(')
+        {
+            const size_t endOoc = text.find("))", pos + 2);
+            if (endOoc == std::string::npos)
+            {
+                result.append(text, pos, std::string::npos);
+                break;
+            }
+
+            result.append(text, pos, endOoc + 2 - pos);
+            pos = endOoc + 2;
+            continue;
+        }
+
+        result.push_back(rlvGagIMCharacter(text[pos]));
+        ++pos;
+    }
+
+    return result;
+}
+}
+
+std::string RlvUtil::filterOutgoingIMGag(const std::string& strUTF8Text)
+{
+    // When "Allow OOC Chat" is disabled, ((OOC)) sections remain readable.
+    const bool preserveOoc = !rlvGetSetting<bool>(RlvSettingNames::CanOoc, true);
+
+    // /me text is narration. In mixed emotes only quoted speech is gagged.
+    if (strUTF8Text.compare(0, 3, "/me") == 0 &&
+        (strUTF8Text.size() == 3 || strUTF8Text[3] == ' ' || strUTF8Text[3] == '\t'))
+    {
+        std::string result = strUTF8Text;
+        size_t quoteStart = result.find('"');
+        while (quoteStart != std::string::npos)
+        {
+            const size_t quoteEnd = result.find('"', quoteStart + 1);
+            if (quoteEnd == std::string::npos)
+                break;
+
+            const std::string speech = result.substr(quoteStart + 1, quoteEnd - quoteStart - 1);
+            const std::string gagged = rlvGagIMSegment(speech, preserveOoc);
+            result.replace(quoteStart + 1, quoteEnd - quoteStart - 1, gagged);
+
+            quoteStart = result.find('"', quoteStart + gagged.size() + 2);
+        }
+        return result;
+    }
+
+    return rlvGagIMSegment(strUTF8Text, preserveOoc);
+}
+
 // Checked: 2009-07-04 (RLVa-1.0.0a) | Modified: RLVa-1.0.0a
 void RlvUtil::filterLocation(std::string& strUTF8Text)
 {

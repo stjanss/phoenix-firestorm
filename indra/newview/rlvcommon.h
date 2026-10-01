@@ -187,6 +187,7 @@ public:
     static bool isNearbyRegion(const std::string& strRegion);                       // @showloc
 
     static void filterLocation(std::string& strUTF8Text);                           // @showloc
+    static std::string filterOutgoingIMGag(const std::string& strUTF8Text);             // optional client-side @sendim gag
     static void filterNames(std::string& strUTF8Text, bool fFilterLegacy = true, bool fClearMatches = false);   // @shownames
     static void filterMentions(std::string& strUTF8Text);                           // @shownames (mention URIs)
     static void filterScriptQuestions(S32& nQuestions, LLSD& sdPayload);

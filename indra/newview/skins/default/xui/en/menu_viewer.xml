@@ -3005,6 +3005,16 @@
       	 parameter="RestrainedLoveCanOOC" />
       </menu_item_check>
       <menu_item_check
+       label="Client-side IM Gag"
+       name="Client-side IM Gag">
+        <menu_item_check.on_check
+         function="CheckControl"
+         parameter="RLVaEnableIMGag" />
+        <menu_item_check.on_click
+         function="ToggleControl"
+         parameter="RLVaEnableIMGag" />
+      </menu_item_check>
+      <menu_item_check
        label="Show Filtered Chat"
        name="Show Filtered Chat">
       	<menu_item_check.on_check
